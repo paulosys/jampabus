@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  static const CameraPosition _centerJP =
+      CameraPosition(target: LatLng(-7.118374, -34.879611), zoom: 15);
 
   @override
   Widget build(BuildContext context) {
@@ -11,11 +13,11 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('JampaBUS'),
         actions: [
-          IconButton(onPressed: (){}, icon: const Icon(Icons.settings))
+          IconButton(onPressed: () {}, icon: const Icon(Icons.settings))
         ],
       ),
       body: const Center(
-        child: Text('Home'),
+        child: GoogleMap(initialCameraPosition: _centerJP),
       ),
     );
   }
