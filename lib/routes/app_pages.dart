@@ -4,6 +4,6 @@ import 'package:jampabus/screens/home/home.dart';
 
 abstract class AppPages {
   static final List<GetPage> pages = [
-    GetPage(name: AppRoutes.home, page: () => const HomePage()),
+    GetPage(name: AppRoutes.home, page: () => HomePage()),
   ];
 }

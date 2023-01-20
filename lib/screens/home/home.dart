@@ -4,9 +4,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../components/button_bottom_sheet/button_bottom_sheet.dart';
 import '../../components/draggable_bottom_sheet/draggable_bottom_sheet.dart';
+import '../../controllers/map_controller.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends GetView<GMapController> {
+  HomePage({super.key});
+
+  final  _controller = Get.put(GMapController.instance);
 
   static const CameraPosition _centerJP =
       CameraPosition(target: LatLng(-7.118374, -34.879611), zoom: 15);
@@ -47,11 +50,14 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(children: [
-        const GoogleMap(
+        Obx(()=> GoogleMap(
           initialCameraPosition: _centerJP,
+          onMapCreated: (controller) => _controller.onMapCreated(controller),
           zoomControlsEnabled: false,
-        ),
-        _floatingSearch()
+          myLocationButtonEnabled: false,
+          myLocationEnabled: _controller.hasUserPosition.value,
+        )),
+        _floatingSearch(),
       ]),
       bottomSheet: BottomSheet(
         enableDrag: false,
@@ -62,13 +68,11 @@ class HomePage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 ButtonBottomSheet(
-                  label: 'Atualizar', 
-                  iconData: Icons.refresh, 
-                  onTap: () {}),
+                    label: 'Atualizar', iconData: Icons.refresh, onTap: () {}),
                 ButtonBottomSheet(
                   label: 'GPS',
                   iconData: Icons.gps_fixed,
-                  onTap: () {},
+                  onTap: () => _controller.moveCameraToUserPosition(),
                 ),
                 ButtonBottomSheet(
                   label: 'Ocultar',

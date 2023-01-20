@@ -1,5 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
+
+import '../../controllers/location_controller.dart';
+import '../../controllers/map_controller.dart';
+import '../../models/address.dart';
 
 class DraggableBottomSheet extends StatefulWidget {
   const DraggableBottomSheet({super.key});
@@ -9,9 +16,17 @@ class DraggableBottomSheet extends StatefulWidget {
 }
 
 class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
+  final _controllerGMap = Get.put(GMapController.instance);
+
+  final _controllerSearchAddr = Get.put(LocationController.instance);
+
+  final _debouncer = _Debouncer(milliseconds: 1000);
+
+  final _inputController = TextEditingController();
+
   RxString placeholderTxt = 'Pesquisar por linha'.obs;
 
-  void changeSearchMethod(String option) {
+  void changeOptionSearch(String option) {
     switch (option) {
       case 'l': // linha
         placeholderTxt.value = 'Pesquisar por linha';
@@ -25,6 +40,20 @@ class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
     }
   }
 
+  void _onSubmit() {
+    String text = _inputController.text;
+
+    switch (placeholderTxt.value) {
+      case 'Pesquisar por linha': // linha
+        break;
+      case 'Pesquisar por endereço': // endereço
+        _controllerSearchAddr.searchLocation(text);
+        break;
+      case 'Pesquisar por favorito': // favorito
+        break;
+    }
+  }
+
   Widget _optionsButtons() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -34,19 +63,19 @@ class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
           Expanded(
               flex: 1,
               child: ElevatedButton(
-                  onPressed: () => changeSearchMethod('l'),
+                  onPressed: () => changeOptionSearch('l'),
                   child: const Text('Linha'))),
           const SizedBox(width: 8),
           Expanded(
               flex: 1,
               child: ElevatedButton(
-                  onPressed: () => changeSearchMethod('e'),
+                  onPressed: () => changeOptionSearch('e'),
                   child: const Text('Endereço'))),
           const SizedBox(width: 8),
           Expanded(
               flex: 1,
               child: ElevatedButton(
-                  onPressed: () => changeSearchMethod('f'),
+                  onPressed: () => changeOptionSearch('f'),
                   child: const Text('Favorito'))),
         ],
       ),
@@ -62,6 +91,37 @@ class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
     );
   }
 
+  Widget buildAddrCards() {
+    if (_controllerSearchAddr.isWaitingAdd.value) {
+      return const CircularProgressIndicator();
+    }
+
+    if (_controllerSearchAddr.addrs.isEmpty) {
+      return const Center(child: Text('Nenhum endereço encontrado.'));
+    }
+
+    return ListView.builder(
+      itemCount: _controllerSearchAddr.addrs.length,
+      itemBuilder: (context, index) {
+        Address addr = _controllerSearchAddr.addrs[index];
+        return Card(
+            child: InkWell(
+          onTap: () {
+            _controllerSearchAddr.addrs.clear();
+            _inputController.clear();
+            _controllerGMap.moveCameraToLocation(addr.latitude, addr.longitude);
+            Get.back();
+          },
+          child: ListTile(
+            leading: const Icon(Icons.location_on),
+            title: const Text('Endereço:'),
+            subtitle: Text(addr.toString()),
+          ),
+        ));
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -71,9 +131,13 @@ class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
               _dragIndicator(),
               TextField(
                   textInputAction: TextInputAction.search,
-                  onTap: () {},
-                  onSubmitted: (value) => {},
-                  //controller: _controllerInput,
+                  onSubmitted: (value) => _onSubmit(),
+                  controller: _inputController,
+                  onChanged: (value) {
+                    _debouncer.run(() {
+                      _onSubmit();
+                    });
+                  },
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
@@ -84,9 +148,27 @@ class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
                     border: const OutlineInputBorder(),
                     hintText: placeholderTxt.value,
                   )),
-              _optionsButtons()
+              _optionsButtons(),
+              _controllerSearchAddr.isWaitingAdd.value
+                  ? const Center(child: CircularProgressIndicator())
+                  : SizedBox(height: 300, child: buildAddrCards())
             ],
           )),
     );
+  }
+}
+
+class _Debouncer {
+  final int milliseconds;
+  VoidCallback? action;
+  Timer? _timer;
+
+  _Debouncer({required this.milliseconds});
+
+  run(VoidCallback action) {
+    if (_timer != null) {
+      _timer!.cancel();
+    }
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
 }

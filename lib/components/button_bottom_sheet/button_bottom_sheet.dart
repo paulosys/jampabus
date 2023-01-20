@@ -19,6 +19,7 @@ class ButtonBottomSheet extends StatelessWidget {
             ),
             onTap: ()=> onTap(),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
                 Icon(iconData),
                 Text(
