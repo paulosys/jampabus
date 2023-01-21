@@ -1,6 +1,6 @@
 import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
-import 'package:jampabus/models/address.dart';
+import 'package:jampabus/models/address_model.dart';
 
 class LocationController extends GetxController {
   LocationController._privateConstructor();

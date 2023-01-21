@@ -9,7 +9,7 @@ import '../../controllers/map_controller.dart';
 class HomePage extends GetView<GMapController> {
   HomePage({super.key});
 
-  final  _controller = Get.put(GMapController.instance);
+  final _controller = Get.put(GMapController.instance);
 
   static const CameraPosition _centerJP =
       CameraPosition(target: LatLng(-7.118374, -34.879611), zoom: 15);
@@ -50,13 +50,16 @@ class HomePage extends GetView<GMapController> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(children: [
-        Obx(()=> GoogleMap(
-          initialCameraPosition: _centerJP,
-          onMapCreated: (controller) => _controller.onMapCreated(controller),
-          zoomControlsEnabled: false,
-          myLocationButtonEnabled: false,
-          myLocationEnabled: _controller.hasUserPosition.value,
-        )),
+        Obx(() => GoogleMap(
+              initialCameraPosition: _centerJP,
+              onMapCreated: (controller) =>
+                  _controller.onMapCreated(controller),
+              // ignore: invalid_use_of_protected_member
+              markers: _controller.markers.value,
+              zoomControlsEnabled: false,
+              myLocationButtonEnabled: false,
+              myLocationEnabled: _controller.hasUserPosition.value,
+            )),
         _floatingSearch(),
       ]),
       bottomSheet: BottomSheet(
@@ -68,7 +71,9 @@ class HomePage extends GetView<GMapController> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 ButtonBottomSheet(
-                    label: 'Atualizar', iconData: Icons.refresh, onTap: () {}),
+                    label: 'Atualizar',
+                    iconData: Icons.refresh,
+                    onTap: () => _controller.fetchAllBusStop()),
                 ButtonBottomSheet(
                   label: 'GPS',
                   iconData: Icons.gps_fixed,
@@ -77,7 +82,7 @@ class HomePage extends GetView<GMapController> {
                 ButtonBottomSheet(
                   label: 'Ocultar',
                   iconData: Icons.bus_alert,
-                  onTap: () {},
+                  onTap: () => _controller.toogleBusStopVisibility(),
                 ),
               ],
             ),

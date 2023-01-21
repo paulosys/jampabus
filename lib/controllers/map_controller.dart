@@ -3,6 +3,8 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:jampabus/api/api.dart';
+import 'package:jampabus/models/bus_stop_model.dart';
 
 class GMapController extends GetxController {
   GMapController._privateConstructor();
@@ -11,9 +13,38 @@ class GMapController extends GetxController {
   late GoogleMapController _mapsController;
   RxBool hasUserPosition = false.obs;
 
+  RxSet<Marker> markers = <Marker>{}.obs;
+
   void onMapCreated(GoogleMapController gmc) async {
     _mapsController = gmc;
+    await fetchAllBusStop();
     await moveCameraToUserPosition();
+  }
+
+  Future<void> fetchAllBusStop() async {
+    BitmapDescriptor busIcon = await BitmapDescriptor.fromAssetImage(
+        const ImageConfiguration(size: Size(52, 52)), 'assets/images/bus.png');
+    List<BusStop> data = await Api.instance.getAllBusStop();
+    // ignore: invalid_use_of_protected_member
+    markers.value = data
+        .map((e) => Marker(
+            markerId: MarkerId(e.code),
+            position: LatLng(e.latitude, e.longitude),
+            icon: busIcon,
+            visible: e.visible,
+            infoWindow: InfoWindow(
+              title: _getTitle(e.code),
+              onTap: () => _getTitle(e.code),
+            )))
+        .toSet();
+  }
+
+  void toogleBusStopVisibility() {
+    if (markers.isEmpty) {
+      fetchAllBusStop();
+    } else {
+      markers.clear();
+    }
   }
 
   Future<void> moveCameraToUserPosition() async {
@@ -88,8 +119,8 @@ class GMapController extends GetxController {
   }
 
   Future<void> moveCameraToLocation(double latitude, double longitude) async {
-    CameraPosition cam = CameraPosition(
-        target: LatLng(latitude, longitude), zoom: 16);
+    CameraPosition cam =
+        CameraPosition(target: LatLng(latitude, longitude), zoom: 16);
 
     _mapsController.animateCamera(CameraUpdate.newCameraPosition(cam));
   }
@@ -98,5 +129,17 @@ class GMapController extends GetxController {
     List<Location> locations = await locationFromAddress(addr);
     Location coords = locations.first;
     moveCameraToLocation(coords.latitude, coords.longitude);
+  }
+
+  String? _getTitle(String originalString) {
+    originalString = originalString.toUpperCase();
+    RegExp regex = RegExp(r"[A-Z]{3}(.*?)P[0-9]");
+    var match = regex.firstMatch(originalString);
+    if (match != null) {
+      var route = match.group(1);
+      route = route!.replaceAll(RegExp(r"^[0-9]+"), "");
+      return route.trimLeft();
+    }
+    return originalString;
   }
 }

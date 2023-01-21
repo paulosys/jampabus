@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 
 import '../../controllers/location_controller.dart';
 import '../../controllers/map_controller.dart';
-import '../../models/address.dart';
+import '../../models/address_model.dart';
 
 class DraggableBottomSheet extends StatefulWidget {
   const DraggableBottomSheet({super.key});
