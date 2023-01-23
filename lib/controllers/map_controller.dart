@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -24,26 +23,57 @@ class GMapController extends GetxController {
   Future<void> fetchAllBusStop() async {
     BitmapDescriptor busIcon = await BitmapDescriptor.fromAssetImage(
         const ImageConfiguration(size: Size(52, 52)), 'assets/images/bus.png');
-    List<BusStop> data = await Api.instance.getAllBusStop();
-    // ignore: invalid_use_of_protected_member
-    markers.value = data
-        .map((e) => Marker(
-            markerId: MarkerId(e.code),
-            position: LatLng(e.latitude, e.longitude),
-            icon: busIcon,
-            visible: e.visible,
-            infoWindow: InfoWindow(
-              title: _getTitle(e.code),
-              onTap: () => _getTitle(e.code),
-            )))
-        .toSet();
+
+    try {
+      List<BusStop> data = await Api.instance.getAllBusStop();
+      markers.clear();
+      markers.addAll(data
+          .map((e) => Marker(
+              markerId: MarkerId(e.code),
+              position: LatLng(e.latitude, e.longitude),
+              icon: busIcon,
+              visible: e.isVisible,
+              infoWindow: InfoWindow(
+                title: _getTitle(e.code),
+                onTap: () => _getTitle(e.code),
+              )))
+          .toSet());
+    } catch (e) {
+      //TODO tratar exceção
+      print(e);
+    }
   }
 
   void toogleBusStopVisibility() {
-    if (markers.isEmpty) {
-      fetchAllBusStop();
-    } else {
+    Set<Marker> toggleMarkers = {};
+    if (markers.first.visible == true) {
+      toggleMarkers = markers
+          .map((e) => Marker(
+              markerId: e.markerId,
+              position: e.position,
+              icon: e.icon,
+              visible: false,
+              infoWindow: InfoWindow(
+                title: e.infoWindow.title,
+                onTap: () => e.infoWindow.onTap,
+              )))
+          .toSet();
       markers.clear();
+      markers.addAll(toggleMarkers);
+    } else {
+      toggleMarkers = markers
+          .map((e) => Marker(
+              markerId: e.markerId,
+              position: e.position,
+              icon: e.icon,
+              visible: true,
+              infoWindow: InfoWindow(
+                title: e.infoWindow.title,
+                onTap: () => e.infoWindow.onTap,
+              )))
+          .toSet();
+      markers.clear();
+      markers.addAll(toggleMarkers);
     }
   }
 
@@ -123,12 +153,6 @@ class GMapController extends GetxController {
         CameraPosition(target: LatLng(latitude, longitude), zoom: 16);
 
     _mapsController.animateCamera(CameraUpdate.newCameraPosition(cam));
-  }
-
-  Future<void> searchAddr(String addr) async {
-    List<Location> locations = await locationFromAddress(addr);
-    Location coords = locations.first;
-    moveCameraToLocation(coords.latitude, coords.longitude);
   }
 
   String? _getTitle(String originalString) {

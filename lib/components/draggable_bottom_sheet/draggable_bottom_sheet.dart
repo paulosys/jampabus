@@ -150,7 +150,7 @@ class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
               _optionsButtons(),
               _controllerSearchAddr.isWaitingAdd.value
                   ? const Center(child: CircularProgressIndicator())
-                  : SizedBox(height: 300, child: buildAddrCards())
+                  : Expanded(child: buildAddrCards())
             ],
           )),
     );

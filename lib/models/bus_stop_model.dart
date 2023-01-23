@@ -2,8 +2,8 @@ class BusStop {
   late final String code;
   late final double latitude;
   late final double longitude;
-  bool favorite = false;
-  bool visible = true;
+  bool isFavorite = false;
+  bool isVisible = true;
 
   BusStop({
     required this.code,

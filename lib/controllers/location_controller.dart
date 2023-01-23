@@ -18,11 +18,7 @@ class LocationController extends GetxController {
       List<Location> locations =
           await locationFromAddress(text, localeIdentifier: 'pt_BR');
 
-      for (var e in locations) {
-        var addr = Address(latitude: e.latitude, longitude: e.longitude);
-        addrs.add(addr);
-      }
-      await _locationAddress();
+      addrs.addAll(await _locationToAddress(locations));
     } catch (e) {
       addrs.clear();
       isWaitingAdd.value = false;
@@ -30,21 +26,29 @@ class LocationController extends GetxController {
     }
   }
 
-  Future<void> _locationAddress() async {
-    for (var e in addrs) {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-          e.latitude, e.longitude,
+  Future<List<Address>> _locationToAddress(List locations) async {
+    List<Address> mAddrs = [];
+
+    for (Location l in locations) {
+      var placemarks = await placemarkFromCoordinates(l.latitude, l.longitude,
           localeIdentifier: 'pt_BR');
 
-      var item = placemarks.first;
-      e.cep = item.postalCode ?? '';
-      e.city = item.subAdministrativeArea ?? '';
-      e.district = item.subLocality ?? '';
-      e.number = item.name ?? '';
-      e.street = item.street ?? '';
+      mAddrs.addAll(placemarks.map(
+        (e) => Address(
+            latitude: l.latitude,
+            longitude: l.longitude,
+            street: e.street ?? '',
+            city: e.subAdministrativeArea ?? '',
+            state: e.administrativeArea ?? '',
+            cep: e.postalCode ?? '',
+            district: e.subLocality ?? '',
+            number: e.name ?? ''),
+      ));
     }
 
-    addrs.removeWhere((element) => element.city != 'João Pessoa');
+    mAddrs.removeWhere((element) => element.state != 'Paraíba');
+
     isWaitingAdd.value = false;
+    return mAddrs;
   }
 }
