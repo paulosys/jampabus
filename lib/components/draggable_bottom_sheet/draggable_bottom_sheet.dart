@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:jampabus/components/drag_indicator/drag_indicator.dart';
 
 import '../../controllers/location_controller.dart';
 import '../../controllers/map_controller.dart';
@@ -81,15 +82,6 @@ class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
     );
   }
 
-  Widget _dragIndicator() {
-    return Container(
-      height: 3,
-      width: 50,
-      color: Colors.grey,
-      margin: const EdgeInsets.symmetric(vertical: 16.0),
-    );
-  }
-
   Widget buildAddrCards() {
     if (_controllerSearchAddr.isWaitingAdd.value) {
       return const CircularProgressIndicator();
@@ -127,7 +119,7 @@ class _DraggableBottomSheetState extends State<DraggableBottomSheet> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Obx(() => Column(
             children: [
-              _dragIndicator(),
+              const DragIndicator(),
               TextField(
                   textInputAction: TextInputAction.search,
                   onSubmitted: (value) => _onSubmit(),

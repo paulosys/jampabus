@@ -54,7 +54,6 @@ class HomePage extends GetView<GMapController> {
               initialCameraPosition: _centerJP,
               onMapCreated: (controller) =>
                   _controller.onMapCreated(controller),
-              // ignore: invalid_use_of_protected_member
               markers: _controller.markers.value,
               zoomControlsEnabled: false,
               myLocationButtonEnabled: false,

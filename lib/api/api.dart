@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_config/flutter_config.dart';
 import 'package:jampabus/models/bus_stop_model.dart';
 
+import '../models/bus_line_model.dart';
+
 class Api {
   late final String _token;
   final String _city = 'jpa';
@@ -29,8 +31,7 @@ class Api {
     int attempts = 0;
 
     while (attempts < 3) {
-      Response response = await dio
-          .post('$baseURL/dispositivo', data: data);
+      Response response = await dio.post('$baseURL/dispositivo', data: data);
       if (response.statusCode == 200) {
         Map result = response.data;
         _token = result['Token'];
@@ -54,15 +55,36 @@ class Api {
       'zoom': 15
     };
 
-    Response response = await dio
-        .post('$baseURL/listaparadasv2', data: data);
+    Response response = await dio.post('$baseURL/listaparadasv2', data: data);
     if (response.statusCode == 200) {
       List<dynamic> result = response.data;
 
-      busStopList.addAll(result.toSet().map((e) => BusStop.fromJson(e)));
+      busStopList.addAll(result.map((e) => BusStop.fromJson(e)));
 
       return busStopList;
     }
     throw Exception('Não foi possível obter as paradas de ônibus.');
+  }
+
+  Future<List<LineBusStop>> getLinesBusStop(BusStop busStop) async {
+    List<LineBusStop> busLineArray = [];
+
+    var data = {
+      'latitude': busStop.latitude,
+      'longitude': busStop.longitude,
+      'parada': busStop.code,
+      'token': _token,
+      'cidade': _city,
+    };
+
+    Response response = await dio
+        .post('https://apissl.bus4.com.br/api/localizemev2', data: data);
+    if (response.statusCode == 200) {
+      List<dynamic> result = response.data;
+  
+      busLineArray.addAll(result.map((e) => LineBusStop.fromJson(e)));
+      return busLineArray;
+    }
+    return [];
   }
 }

@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:jampabus/api/api.dart';
+import 'package:jampabus/components/lines_bottom_sheet/lines_bottom_sheet.dart';
 import 'package:jampabus/models/bus_stop_model.dart';
 
 class GMapController extends GetxController {
@@ -35,7 +36,15 @@ class GMapController extends GetxController {
               visible: e.isVisible,
               infoWindow: InfoWindow(
                 title: _getTitle(e.code),
-                onTap: () => _getTitle(e.code),
+                onTap: () => showModalBottomSheet(
+                    context: Get.context!,
+                    isScrollControlled: true,
+                    builder: (context) {
+                      return FractionallySizedBox(
+                        heightFactor: 0.9,
+                        child: LinesBottomSheet(busStop: e),
+                      );
+                    }),
               )))
           .toSet());
     } catch (e) {
