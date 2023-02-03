@@ -3,133 +3,289 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../components/button_bottom_sheet/button_bottom_sheet.dart';
-import '../../components/draggable_bottom_sheet/draggable_bottom_sheet.dart';
+
+import '../../controllers/location_controller.dart';
 import '../../controllers/map_controller.dart';
+import '../../models/address_model.dart';
 
-class HomePage extends GetView<GMapController> {
-  HomePage({super.key});
-
-  final _controller = Get.put(GMapController.instance);
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   static const CameraPosition _centerJP =
       CameraPosition(target: LatLng(-7.118374, -34.879611), zoom: 15);
 
-  Widget _floatingSearch() {
-    return Positioned(
-        left: 8,
-        right: 8,
-        bottom: 72,
-        child: Container(
-          height: 100,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(0, 3), // changes position of shadow
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                height: 64,
-                margin: const EdgeInsets.only(top: 16),
-                width: MediaQuery.of(Get.context!).size.width / 1.1,
-                child: _ButtonSearch(),
-              ),
-            ],
-          ),
-        ));
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final _controllerMaps = Get.put(GMapController.instance);
+  final _controllerSearchAddr = Get.put(LocationController());
+
+  final TextEditingController _searchInputController = TextEditingController();
+  final RxBool _isSearching = false.obs;
+
+  final RxList<bool> _options =
+      [true, false, false].obs; // Linha, Endereço, Favoritos.
+
+  void _onSubmit() async {
+    String text = _searchInputController.text.trim();
+    if (text.isEmpty) return;
+
+    if (_options[0]) {
+    } else if (_options[1]) {
+      try {
+        await _controllerSearchAddr.searchLocation(text);
+      } catch (e) {
+        _controllerSearchAddr.clear();
+      }
+    } else if (_options[2]) {}
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(children: [
-        Obx(() => GoogleMap(
-              initialCameraPosition: _centerJP,
-              onMapCreated: (controller) =>
-                  _controller.onMapCreated(controller),
-              markers: _controller.markers.value,
-              zoomControlsEnabled: false,
-              myLocationButtonEnabled: false,
-              myLocationEnabled: _controller.hasUserPosition.value,
-            )),
-        _floatingSearch(),
-      ]),
-      bottomSheet: BottomSheet(
-        enableDrag: false,
-        builder: (context) {
-          return SizedBox(
-            height: 64,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                ButtonBottomSheet(
-                    label: 'Atualizar',
-                    iconData: Icons.refresh,
-                    onTap: () => _controller.fetchAllBusStop()),
-                ButtonBottomSheet(
-                  label: 'GPS',
-                  iconData: Icons.gps_fixed,
-                  onTap: () => _controller.moveCameraToUserPosition(),
-                ),
-                ButtonBottomSheet(
-                  label: 'Ocultar',
-                  iconData: Icons.bus_alert,
-                  onTap: () => _controller.toogleBusStopVisibility(),
-                ),
-              ],
+  Widget _containerSearch() {
+    return WillPopScope(
+        child: Container(
+          height: double.infinity,
+          width: double.infinity,
+          padding: EdgeInsets.only(
+              top: Get.statusBarHeight + 32, left: 16, right: 16),
+          color: Colors.white,
+          child: Column(
+            children: [
+              _optionsButtons(),
+              _buildAddrCards(),
+            ],
+          ),
+        ),
+        onWillPop: () async {
+          if (_isSearching.value) {
+            _searchInputController.clear();
+            _controllerSearchAddr.clear();
+            _isSearching.value = false;
+            return false;
+          }
+          return true;
+        });
+  }
+
+  Widget _buildAddrCards() {
+    if (_controllerSearchAddr.isWaitingAdd.value) {
+      return const Expanded(child: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_controllerSearchAddr.addrs.isEmpty) {
+      return const Expanded(
+          child: Center(child: Text('Nenhum resultado encontrado.')));
+    }
+
+    return Expanded(
+      child: ListView.builder(
+        itemCount: _controllerSearchAddr.addrs.length,
+        itemBuilder: (context, index) {
+          Address addr = _controllerSearchAddr.addrs[index];
+          return Card(
+              child: InkWell(
+            onTap: () {
+              FocusManager.instance.primaryFocus?.unfocus();
+              _searchInputController.clear();
+              _controllerSearchAddr.clear();
+              _isSearching.value = false;
+              _controllerMaps.moveCameraToLocation(
+                  addr.latitude, addr.longitude);
+            },
+            child: ListTile(
+              leading: const Icon(Icons.location_on),
+              title: const Text('Endereço:'),
+              subtitle: Text(addr.toString()),
             ),
-          );
+          ));
         },
-        onClosing: () {},
       ),
     );
   }
-}
 
-class _ButtonSearch extends StatelessWidget {
+  Widget _optionsButtons() {
+    return IntrinsicHeight(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _SearchButtonOption(
+              icon: Icon(
+                Icons.directions_bus,
+                color: _options[0] ? Colors.blue : Colors.grey,
+              ),
+              label: const Text('Linha'),
+              onTap: () => changeOptionSearch(0)),
+          VerticalDivider(
+            thickness: 1,
+            color: Colors.grey[300],
+          ),
+          _SearchButtonOption(
+            icon: Icon(Icons.location_on,
+                color: _options[1] ? Colors.green : Colors.grey),
+            label: const Text('Endereço'),
+            onTap: () => changeOptionSearch(1),
+          ),
+          VerticalDivider(
+            thickness: 1,
+            color: Colors.grey[300],
+          ),
+          _SearchButtonOption(
+            icon: Icon(Icons.star,
+                color: _options[2] ? Colors.yellow[500] : Colors.grey),
+            label: const Text('Favorito'),
+            onTap: () => changeOptionSearch(2),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void changeOptionSearch(int index) {
+    _controllerSearchAddr.clear();
+    for (int i = 0; i < _options.length; i++) {
+      if (i == index) {
+        _options[i] = true;
+      } else {
+        _options[i] = false;
+      }
+    }
+  }
+
+  Widget _textFieldSearch() {
+    double topMargin = MediaQuery.of(context).viewPadding.top + 16;
+    return Container(
+      height: 50,
+      width: double.infinity,
+      margin: EdgeInsets.only(top: topMargin, left: 16, right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            offset: Offset(0, 2),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: TextField(
+        autofocus: _isSearching.value,
+        controller: _searchInputController,
+        onSubmitted: (value) => _onSubmit(),
+        onChanged: (value) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: "Pesquisar...",
+          hintStyle: const TextStyle(color: Colors.grey),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.only(left: 15, top: 15),
+          prefixIcon: _isSearching.value
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.grey),
+                  onPressed: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    _searchInputController.clear();
+                    _isSearching.value = false;
+                  },
+                  tooltip: 'Voltar',
+                )
+              : const Icon(Icons.location_on, color: Colors.grey),
+          suffixIcon: _searchInputController.text.isEmpty
+              ? const Icon(Icons.search, color: Colors.grey)
+              : IconButton(
+                  icon: const Icon(Icons.clear, color: Colors.grey),
+                  tooltip: 'Limpar',
+                  onPressed: () {
+                    setState(() {
+                      _searchInputController.clear();
+                    });
+                  },
+                ),
+        ),
+        onTap: () => _isSearching.value = true,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Material(
-            color: Colors.grey[200],
-            child: InkWell(
-                onTap: () {
-                  showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (context) {
-                        return const FractionallySizedBox(
-                          heightFactor: 0.9,
-                          child: DraggableBottomSheet(),
-                        );
-                      });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const <Widget>[
-                      Text(
-                        'Pesquisar',
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20),
+    return Obx(() => Scaffold(
+          body: Stack(children: [
+            GoogleMap(
+              initialCameraPosition: HomePage._centerJP,
+              onMapCreated: (controller) =>
+                  _controllerMaps.onMapCreated(controller),
+              markers: _controllerMaps.markers.value,
+              zoomControlsEnabled: false,
+              myLocationButtonEnabled: false,
+              myLocationEnabled: _controllerMaps.hasUserPosition.value,
+            ),
+            if (_isSearching.value) _containerSearch(),
+            _textFieldSearch(),
+          ]),
+          bottomSheet: _isSearching.value == false
+              ? BottomSheet(
+                  enableDrag: false,
+                  builder: (context) {
+                    return SizedBox(
+                      height: 64,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          ButtonBottomSheet(
+                              label: 'Atualizar',
+                              iconData: Icons.refresh,
+                              onTap: () => _controllerMaps.fetchAllBusStop()),
+                          ButtonBottomSheet(
+                            label: 'GPS',
+                            iconData: Icons.gps_fixed,
+                            onTap: () =>
+                                _controllerMaps.moveCameraToUserPosition(),
+                          ),
+                          ButtonBottomSheet(
+                            label: 'Ocultar',
+                            iconData: Icons.bus_alert,
+                            onTap: () =>
+                                _controllerMaps.toogleBusStopVisibility(),
+                          ),
+                        ],
                       ),
-                      Icon(
-                        Icons.search,
-                        color: Colors.black,
-                      )
-                    ],
-                  ),
-                ))));
+                    );
+                  },
+                  onClosing: () {},
+                )
+              : null,
+        ));
+  }
+}
+
+class _SearchButtonOption extends StatelessWidget {
+  final Text label;
+  final Icon icon;
+  final Function onTap;
+  const _SearchButtonOption(
+      {required this.label, required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.fromSize(
+      size: const Size(70, 56),
+      child: ClipOval(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => onTap(),
+            splashColor: Colors.blueGrey[100],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                icon, // <-- Icon
+                label, // <-- Text
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
