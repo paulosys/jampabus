@@ -53,6 +53,16 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+  flutter_native_splash: ^2.2.17
+
+flutter_native_splash:
+  color: "#019BE3"
+  image: "assets/images/splash.png"
+  android: true
+  ios: true
+  android_12:
+    image: "assets/images/android-12-splash.png"
+    color: "#019BE3"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -68,7 +78,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/bus.png
-    - assets/images/logo.png
+    - assets/images/splash.png
+    - assets/images/android-12-splash.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

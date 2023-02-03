@@ -7,9 +7,6 @@ import 'package:jampabus/components/lines_bottom_sheet/lines_bottom_sheet.dart';
 import 'package:jampabus/models/bus_stop_model.dart';
 
 class GMapController extends GetxController {
-  GMapController._privateConstructor();
-  static final GMapController instance = GMapController._privateConstructor();
-
   late GoogleMapController _mapsController;
   RxBool hasUserPosition = false.obs;
 
@@ -17,39 +14,44 @@ class GMapController extends GetxController {
 
   void onMapCreated(GoogleMapController gmc) async {
     _mapsController = gmc;
-    await fetchAllBusStop();
+    await getAllBusStop();
     await moveCameraToUserPosition();
   }
 
-  Future<void> fetchAllBusStop() async {
+  Future<void> getAllBusStop() async {
     BitmapDescriptor busIcon = await BitmapDescriptor.fromAssetImage(
         const ImageConfiguration(size: Size(52, 52)), 'assets/images/bus.png');
 
-    try {
-      List<BusStop> data = await Api.instance.getAllBusStop();
-      markers.clear();
-      markers.addAll(data
-          .map((e) => Marker(
-              markerId: MarkerId(e.code),
-              position: LatLng(e.latitude, e.longitude),
-              icon: busIcon,
-              visible: e.isVisible,
-              infoWindow: InfoWindow(
-                title: _getTitle(e.code),
-                onTap: () => showModalBottomSheet(
-                    context: Get.context!,
-                    isScrollControlled: true,
-                    builder: (context) {
-                      return FractionallySizedBox(
-                        heightFactor: 0.9,
-                        child: LinesBottomSheet(busStop: e),
-                      );
-                    }),
-              )))
-          .toSet());
-    } catch (e) {
-      //TODO tratar exceção
-      print(e);
+    List<BusStop> data = [];
+    int attempts = 0;
+
+    while (attempts < 3) {
+      try {
+        data = await Api.instance.getAllBusStop();
+      } catch (e) {
+        attempts++;
+      } finally {
+        markers.clear();
+        markers.addAll(data
+            .map((e) => Marker(
+                markerId: MarkerId(e.code),
+                position: LatLng(e.latitude, e.longitude),
+                icon: busIcon,
+                visible: e.isVisible,
+                infoWindow: InfoWindow(
+                  title: _getTitle(e.code),
+                  onTap: () => showModalBottomSheet(
+                      context: Get.context!,
+                      isScrollControlled: true,
+                      builder: (context) {
+                        return FractionallySizedBox(
+                          heightFactor: 0.9,
+                          child: LinesBottomSheet(busStop: e),
+                        );
+                      }),
+                )))
+            .toSet());
+      }
     }
   }
 

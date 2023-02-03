@@ -19,7 +19,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _controllerMaps = Get.put(GMapController.instance);
+  final _controllerMaps = Get.put(GMapController());
   final _controllerSearchAddr = Get.put(LocationController());
 
   final TextEditingController _searchInputController = TextEditingController();
@@ -235,7 +235,7 @@ class _HomePageState extends State<HomePage> {
                           ButtonBottomSheet(
                               label: 'Atualizar',
                               iconData: Icons.refresh,
-                              onTap: () => _controllerMaps.fetchAllBusStop()),
+                              onTap: () => _controllerMaps.getAllBusStop()),
                           ButtonBottomSheet(
                             label: 'GPS',
                             iconData: Icons.gps_fixed,
