@@ -17,47 +17,25 @@ class GMapController extends GetxController {
 
   void onMapCreated(GoogleMapController gmc) async {
     _mapsController = gmc;
-<<<<<<< HEAD
-=======
-    await getAllBusStop();
->>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
     await moveCameraToUserPosition();
   }
 
   Future<void> getAllBusStop() async {
-<<<<<<< HEAD
-    // BitmapDescriptor busIcon = await MarkerIcon.pictureAsset(
-    //     assetPath: 'assets/images/bus.png', width: 56, height: 56);
-
-    //BitmapDescriptor busIcon = await MarkerIcon.widgetToIcon(markerKey);
-
-=======
     BitmapDescriptor busIcon = await BitmapDescriptor.fromAssetImage(
         const ImageConfiguration(size: Size(52, 52)), 'assets/images/bus.png');
 
->>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
     List<BusStop> data = [];
     int attempts = 0;
 
     while (attempts < 3) {
       try {
         data = await Api.instance.getAllBusStop();
-<<<<<<< HEAD
-=======
-      } catch (e) {
-        attempts++;
-      } finally {
->>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
         markers.clear();
         markers.addAll(data
             .map((e) => Marker(
                 markerId: MarkerId(e.code),
                 position: LatLng(e.latitude, e.longitude),
-<<<<<<< HEAD
-                //icon: busIcon,
-=======
                 icon: busIcon,
->>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
                 visible: e.isVisible,
                 infoWindow: InfoWindow(
                   title: _getTitle(e.code),
@@ -72,13 +50,10 @@ class GMapController extends GetxController {
                       }),
                 )))
             .toSet());
-<<<<<<< HEAD
         return;
       } catch (e) {
         attempts++;
         print("falhou");
-=======
->>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
       }
     }
   }
