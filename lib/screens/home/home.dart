@@ -20,8 +20,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+<<<<<<< HEAD
   late final GMapController _controllerMaps;
   late final LocationController _controllerSearchAddr;
+=======
+  final _controllerMaps = Get.put(GMapController());
+  final _controllerSearchAddr = Get.put(LocationController());
+>>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
 
   final TextEditingController _searchInputController = TextEditingController();
   final RxBool _isSearching = false.obs;
@@ -29,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   final RxList<bool> _options =
       [true, false, false].obs; // Linha, Endereço, Favoritos.
 
+<<<<<<< HEAD
   @override
   void initState() {
     super.initState();
@@ -43,6 +49,8 @@ class _HomePageState extends State<HomePage> {
     _controllerSearchAddr = LocationController();
   }
 
+=======
+>>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
   void _onSubmit() async {
     String text = _searchInputController.text.trim();
     if (text.isEmpty) return;
@@ -226,13 +234,17 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
           body: Stack(children: [
+<<<<<<< HEAD
             BusStopMarker(
               key: _controllerMaps.markerKey,
             ),
+=======
+>>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
             GoogleMap(
               initialCameraPosition: HomePage._centerJP,
               onMapCreated: (controller) =>
                   _controllerMaps.onMapCreated(controller),
+<<<<<<< HEAD
               markers: _controllerMaps.busStopIsVisible.value
                   ? _controllerMaps.markers.toSet()
                   : {},
@@ -324,3 +336,79 @@ class _SearchButtonOption extends StatelessWidget {
     );
   }
 }
+=======
+              markers: _controllerMaps.markers.value,
+              zoomControlsEnabled: false,
+              myLocationButtonEnabled: false,
+              myLocationEnabled: _controllerMaps.hasUserPosition.value,
+            ),
+            if (_isSearching.value) _containerSearch(),
+            _textFieldSearch(),
+          ]),
+          bottomSheet: _isSearching.value == false
+              ? BottomSheet(
+                  enableDrag: false,
+                  builder: (context) {
+                    return SizedBox(
+                      height: 64,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          ButtonBottomSheet(
+                              label: 'Atualizar',
+                              iconData: Icons.refresh,
+                              onTap: () => _controllerMaps.getAllBusStop()),
+                          ButtonBottomSheet(
+                            label: 'GPS',
+                            iconData: Icons.gps_fixed,
+                            onTap: () =>
+                                _controllerMaps.moveCameraToUserPosition(),
+                          ),
+                          ButtonBottomSheet(
+                            label: 'Ocultar',
+                            iconData: Icons.bus_alert,
+                            onTap: () =>
+                                _controllerMaps.toogleBusStopVisibility(),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  onClosing: () {},
+                )
+              : null,
+        ));
+  }
+}
+
+class _SearchButtonOption extends StatelessWidget {
+  final Text label;
+  final Icon icon;
+  final Function onTap;
+  const _SearchButtonOption(
+      {required this.label, required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.fromSize(
+      size: const Size(70, 56),
+      child: ClipOval(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => onTap(),
+            splashColor: Colors.blueGrey[100],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                icon, // <-- Icon
+                label, // <-- Text
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+>>>>>>> 8c54f92a5c10a4a6cf10de6655dd65b7ae61ce10
