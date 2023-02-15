@@ -7,84 +7,94 @@ import 'package:jampabus/components/lines_bottom_sheet/lines_bottom_sheet.dart';
 import 'package:jampabus/models/bus_stop_model.dart';
 
 class GMapController extends GetxController {
-  GMapController._privateConstructor();
-  static final GMapController instance = GMapController._privateConstructor();
-
   late GoogleMapController _mapsController;
   RxBool hasUserPosition = false.obs;
+  RxBool busStopIsVisible = true.obs;
 
   RxSet<Marker> markers = <Marker>{}.obs;
 
+   final markerKey = GlobalKey();
+
   void onMapCreated(GoogleMapController gmc) async {
     _mapsController = gmc;
-    await fetchAllBusStop();
     await moveCameraToUserPosition();
   }
 
-  Future<void> fetchAllBusStop() async {
-    BitmapDescriptor busIcon = await BitmapDescriptor.fromAssetImage(
-        const ImageConfiguration(size: Size(52, 52)), 'assets/images/bus.png');
+  Future<void> getAllBusStop() async {
+    // BitmapDescriptor busIcon = await MarkerIcon.pictureAsset(
+    //     assetPath: 'assets/images/bus.png', width: 56, height: 56);
 
-    try {
-      List<BusStop> data = await Api.instance.getAllBusStop();
-      markers.clear();
-      markers.addAll(data
-          .map((e) => Marker(
-              markerId: MarkerId(e.code),
-              position: LatLng(e.latitude, e.longitude),
-              icon: busIcon,
-              visible: e.isVisible,
-              infoWindow: InfoWindow(
-                title: _getTitle(e.code),
-                onTap: () => showModalBottomSheet(
-                    context: Get.context!,
-                    isScrollControlled: true,
-                    builder: (context) {
-                      return FractionallySizedBox(
-                        heightFactor: 0.9,
-                        child: LinesBottomSheet(busStop: e),
-                      );
-                    }),
-              )))
-          .toSet());
-    } catch (e) {
-      //TODO tratar exceção
-      print(e);
+    //BitmapDescriptor busIcon = await MarkerIcon.widgetToIcon(markerKey);
+
+    List<BusStop> data = [];
+    int attempts = 0;
+
+    while (attempts < 3) {
+      try {
+        data = await Api.instance.getAllBusStop();
+        markers.clear();
+        markers.addAll(data
+            .map((e) => Marker(
+                markerId: MarkerId(e.code),
+                position: LatLng(e.latitude, e.longitude),
+                //icon: busIcon,
+                visible: e.isVisible,
+                infoWindow: InfoWindow(
+                  title: _getTitle(e.code),
+                  onTap: () => showModalBottomSheet(
+                      context: Get.context!,
+                      isScrollControlled: true,
+                      builder: (context) {
+                        return FractionallySizedBox(
+                          heightFactor: 0.9,
+                          child: LinesBottomSheet(busStop: e),
+                        );
+                      }),
+                )))
+            .toSet());
+        return;
+      } catch (e) {
+        attempts++;
+        print("falhou");
+      }
     }
   }
 
-  void toogleBusStopVisibility() {
-    Set<Marker> toggleMarkers = {};
-    if (markers.first.visible == true) {
-      toggleMarkers = markers
-          .map((e) => Marker(
-              markerId: e.markerId,
-              position: e.position,
-              icon: e.icon,
-              visible: false,
-              infoWindow: InfoWindow(
-                title: e.infoWindow.title,
-                onTap: () => e.infoWindow.onTap,
-              )))
-          .toSet();
-      markers.clear();
-      markers.addAll(toggleMarkers);
-    } else {
-      toggleMarkers = markers
-          .map((e) => Marker(
-              markerId: e.markerId,
-              position: e.position,
-              icon: e.icon,
-              visible: true,
-              infoWindow: InfoWindow(
-                title: e.infoWindow.title,
-                onTap: () => e.infoWindow.onTap,
-              )))
-          .toSet();
-      markers.clear();
-      markers.addAll(toggleMarkers);
-    }
-  }
+  void toogleBusStopVisilibity() =>
+      busStopIsVisible.value = !busStopIsVisible.value;
+
+  // void toogleBusStopVisibility() {
+  //   Set<Marker> toggleMarkers = {};
+  //   if (markers.first.visible == true) {
+  //     toggleMarkers = markers
+  //         .map((e) => Marker(
+  //             markerId: e.markerId,
+  //             position: e.position,
+  //             icon: e.icon,
+  //             visible: false,
+  //             infoWindow: InfoWindow(
+  //               title: e.infoWindow.title,
+  //               onTap: () => e.infoWindow.onTap,
+  //             )))
+  //         .toSet();
+  //     markers.clear();
+  //     markers.addAll(toggleMarkers);
+  //   } else {
+  //     toggleMarkers = markers
+  //         .map((e) => Marker(
+  //             markerId: e.markerId,
+  //             position: e.position,
+  //             icon: e.icon,
+  //             visible: true,
+  //             infoWindow: InfoWindow(
+  //               title: e.infoWindow.title,
+  //               onTap: () => e.infoWindow.onTap,
+  //             )))
+  //         .toSet();
+  //     markers.clear();
+  //     markers.addAll(toggleMarkers);
+  //   }
+  // }
 
   Future<void> moveCameraToUserPosition() async {
     Position location = await getUserPosition();

@@ -3,10 +3,6 @@ import 'package:get/get.dart';
 import 'package:jampabus/models/address_model.dart';
 
 class LocationController extends GetxController {
-  LocationController._privateConstructor();
-  static final LocationController instance =
-      LocationController._privateConstructor();
-
   final RxList<Address> addrs = <Address>[].obs;
   final RxBool isWaitingAdd = false.obs;
 
@@ -50,5 +46,10 @@ class LocationController extends GetxController {
 
     isWaitingAdd.value = false;
     return mAddrs;
+  }
+
+  void clear() {
+    addrs.clear();
+    isWaitingAdd.value = false;
   }
 }
