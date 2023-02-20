@@ -9,13 +9,17 @@ import 'routes/app_routes.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterConfig.loadEnvVariables();
+  _changeColorSystem();
+
+  runApp(const MyApp());
+}
+
+void _changeColorSystem() {
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: Colors.blue[400], // transparent status bar
     statusBarIconBrightness: Brightness.light,
     systemNavigationBarColor: Colors.blue[400],
   ));
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

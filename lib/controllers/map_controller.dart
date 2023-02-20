@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:jampabus/api/api.dart';
 import 'package:jampabus/components/lines_bottom_sheet/lines_bottom_sheet.dart';
-import 'package:jampabus/models/bus_stop_model.dart';
 
 class GMapController extends GetxController {
   late GoogleMapController _mapsController;
@@ -13,47 +12,46 @@ class GMapController extends GetxController {
 
   RxSet<Marker> markers = <Marker>{}.obs;
 
-   final markerKey = GlobalKey();
-
   void onMapCreated(GoogleMapController gmc) async {
     _mapsController = gmc;
     await moveCameraToUserPosition();
   }
 
-  Future<void> getAllBusStop() async {
+  Future<void> _createMarkers(List data) async {
     BitmapDescriptor busIcon = await BitmapDescriptor.fromAssetImage(
-        const ImageConfiguration(size: Size(52, 52)), 'assets/images/bus.png');
+        const ImageConfiguration(), 'assets/images/bus-stop.png');
+    markers.addAll(data
+        .map((e) => Marker(
+            markerId: MarkerId(e.code),
+            position: LatLng(e.latitude, e.longitude),
+            icon: busIcon,
+            visible: e.isVisible,
+            infoWindow: InfoWindow(
+              title: _getTitle(e.code),
+              onTap: () => showModalBottomSheet(
+                  context: Get.context!,
+                  isScrollControlled: true,
+                  builder: (context) {
+                    return FractionallySizedBox(
+                      heightFactor: 0.9,
+                      child: LinesBottomSheet(busStop: e),
+                    );
+                  }),
+            )))
+        .toSet());
+  }
 
-    List<BusStop> data = [];
+  Future<void> getAllBusStop() async {
     int attempts = 0;
+    List data = [];
 
     while (attempts < 3) {
       try {
         data = await Api.instance.getAllBusStop();
-        markers.clear();
-        markers.addAll(data
-            .map((e) => Marker(
-                markerId: MarkerId(e.code),
-                position: LatLng(e.latitude, e.longitude),
-                icon: busIcon,
-                visible: e.isVisible,
-                infoWindow: InfoWindow(
-                  title: _getTitle(e.code),
-                  onTap: () => showModalBottomSheet(
-                      context: Get.context!,
-                      isScrollControlled: true,
-                      builder: (context) {
-                        return FractionallySizedBox(
-                          heightFactor: 0.9,
-                          child: LinesBottomSheet(busStop: e),
-                        );
-                      }),
-                )))
-            .toSet());
+        await _createMarkers(data);
         return;
       } catch (e) {
         attempts++;
-        print("falhou");
       }
     }
   }

@@ -32,15 +32,17 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // transparent status bar
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.grey[20],
-    ));
+    _changeColorSystem();
 
     _controllerMaps = Get.find<GMapController>();
     _controllerSearchAddr = LocationController();
+  }
+
+  void _changeColorSystem() {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent, // transparent status bar
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.grey[100]));
   }
 
   void _onSubmit() async {
@@ -226,9 +228,6 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
           body: Stack(children: [
-            BusStopMarker(
-              key: _controllerMaps.markerKey,
-            ),
             GoogleMap(
               initialCameraPosition: HomePage._centerJP,
               onMapCreated: (controller) =>
@@ -276,21 +275,6 @@ class _HomePageState extends State<HomePage> {
                 )
               : null,
         ));
-  }
-}
-
-class BusStopMarker extends StatelessWidget {
-  const BusStopMarker({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      width: 56,
-      decoration: BoxDecoration(
-          color: Colors.blue, borderRadius: BorderRadius.circular(5)),
-      child: const Icon(Icons.bus_alert),
-    );
   }
 }
 
