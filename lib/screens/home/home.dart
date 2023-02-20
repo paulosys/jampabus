@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:jampabus/enum/is_searching.dart';
 
 import '../../components/button_bottom_sheet/button_bottom_sheet.dart';
 
@@ -24,10 +25,8 @@ class _HomePageState extends State<HomePage> {
   late final LocationController _controllerSearchAddr;
 
   final TextEditingController _searchInputController = TextEditingController();
-  final RxBool _isSearching = false.obs;
 
-  final RxList<bool> _options =
-      [true, false, false].obs; // Linha, Endereço, Favoritos.
+  final Rx<IsSearching> searchingOption = Rx(IsSearching.none);
 
   @override
   void initState() {
@@ -49,23 +48,31 @@ class _HomePageState extends State<HomePage> {
     String text = _searchInputController.text.trim();
     if (text.isEmpty) return;
 
-    if (_options[0]) {
-    } else if (_options[1]) {
-      try {
-        await _controllerSearchAddr.searchLocation(text);
-      } catch (e) {
-        _controllerSearchAddr.clear();
-      }
-    } else if (_options[2]) {}
+    switch (searchingOption.value) {
+      case IsSearching.line:
+        break;
+      case IsSearching.address:
+        try {
+          await _controllerSearchAddr.searchLocation(text);
+        } catch (e) {
+          _controllerSearchAddr.clear();
+        }
+        break;
+      case IsSearching.favorite:
+        break;
+      default:
+    }
   }
 
   Widget _containerSearch() {
+    double paddingSearchInput = Get.statusBarHeight + 32;
+
     return WillPopScope(
         child: Container(
           height: double.infinity,
           width: double.infinity,
-          padding: EdgeInsets.only(
-              top: Get.statusBarHeight + 32, left: 16, right: 16),
+          padding:
+              EdgeInsets.only(top: paddingSearchInput, left: 16, right: 16),
           color: Colors.white,
           child: Column(
             children: [
@@ -75,10 +82,10 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         onWillPop: () async {
-          if (_isSearching.value) {
+          if (searchingOption.value != IsSearching.none) {
             _searchInputController.clear();
             _controllerSearchAddr.clear();
-            _isSearching.value = false;
+            searchingOption.value = IsSearching.none;
             return false;
           }
           return true;
@@ -106,9 +113,9 @@ class _HomePageState extends State<HomePage> {
               FocusManager.instance.primaryFocus?.unfocus();
               _searchInputController.clear();
               _controllerSearchAddr.clear();
-              _isSearching.value = false;
               _controllerMaps.moveCameraToLocation(
                   addr.latitude, addr.longitude);
+              searchingOption.value = IsSearching.none;
             },
             child: ListTile(
               leading: const Icon(Icons.location_on),
@@ -129,19 +136,23 @@ class _HomePageState extends State<HomePage> {
           _SearchButtonOption(
               icon: Icon(
                 Icons.directions_bus,
-                color: _options[0] ? Colors.blue : Colors.grey,
+                color: searchingOption.value == IsSearching.line
+                    ? Colors.blue
+                    : Colors.grey,
               ),
               label: const Text('Linha'),
-              onTap: () => changeOptionSearch(0)),
+              onTap: () => _changeOptionSearch(IsSearching.line)),
           VerticalDivider(
             thickness: 1,
             color: Colors.grey[300],
           ),
           _SearchButtonOption(
             icon: Icon(Icons.location_on,
-                color: _options[1] ? Colors.green : Colors.grey),
+                color: searchingOption.value == IsSearching.address
+                    ? Colors.green
+                    : Colors.grey),
             label: const Text('Endereço'),
-            onTap: () => changeOptionSearch(1),
+            onTap: () => _changeOptionSearch(IsSearching.address),
           ),
           VerticalDivider(
             thickness: 1,
@@ -149,78 +160,107 @@ class _HomePageState extends State<HomePage> {
           ),
           _SearchButtonOption(
             icon: Icon(Icons.star,
-                color: _options[2] ? Colors.yellow[500] : Colors.grey),
+                color: searchingOption.value == IsSearching.favorite
+                    ? Colors.yellow[500]
+                    : Colors.grey),
             label: const Text('Favorito'),
-            onTap: () => changeOptionSearch(2),
+            onTap: () => _changeOptionSearch(IsSearching.favorite),
           ),
         ],
       ),
     );
   }
 
-  void changeOptionSearch(int index) {
+  void _changeOptionSearch(IsSearching searchMode) {
     _controllerSearchAddr.clear();
-    for (int i = 0; i < _options.length; i++) {
-      if (i == index) {
-        _options[i] = true;
-      } else {
-        _options[i] = false;
-      }
-    }
+    searchingOption.value = searchMode;
   }
 
-  Widget _textFieldSearch() {
+  Widget _inputSearch() {
     double topMargin = MediaQuery.of(context).viewPadding.top + 16;
     return Container(
-      height: 50,
-      width: double.infinity,
-      margin: EdgeInsets.only(top: topMargin, left: 16, right: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            offset: Offset(0, 2),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: TextField(
-        autofocus: _isSearching.value,
-        controller: _searchInputController,
-        onSubmitted: (value) => _onSubmit(),
-        onChanged: (value) => setState(() {}),
-        decoration: InputDecoration(
-          hintText: "Pesquisar...",
-          hintStyle: const TextStyle(color: Colors.grey),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.only(left: 15, top: 15),
-          prefixIcon: _isSearching.value
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.grey),
-                  onPressed: () {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                    _searchInputController.clear();
-                    _isSearching.value = false;
-                  },
-                  tooltip: 'Voltar',
-                )
-              : const Icon(Icons.location_on, color: Colors.grey),
-          suffixIcon: _searchInputController.text.isEmpty
-              ? const Icon(Icons.search, color: Colors.grey)
-              : IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
-                  tooltip: 'Limpar',
-                  onPressed: () {
-                    setState(() {
-                      _searchInputController.clear();
-                    });
-                  },
-                ),
+        height: 50,
+        width: double.infinity,
+        margin: EdgeInsets.only(top: topMargin, left: 16, right: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              offset: Offset(0, 2),
+              blurRadius: 6,
+            ),
+          ],
         ),
-        onTap: () => _isSearching.value = true,
-      ),
+        child:TextField(
+              autofocus: searchingOption.value != IsSearching.none,
+              controller: _searchInputController,
+              onSubmitted: (value) => _onSubmit(),
+              onChanged: (value) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: "Pesquisar...",
+                hintStyle: const TextStyle(color: Colors.grey),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.only(left: 15, top: 15),
+                prefixIcon: searchingOption.value != IsSearching.none
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.grey),
+                        onPressed: () {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          _searchInputController.clear();
+                          searchingOption.value = IsSearching.none;
+                        },
+                        tooltip: 'Voltar',
+                      )
+                    : const Icon(Icons.location_on, color: Colors.grey),
+                suffixIcon: _searchInputController.text.isEmpty
+                    ? const Icon(Icons.search, color: Colors.grey)
+                    : IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        tooltip: 'Limpar',
+                        onPressed: () {
+                          setState(() {
+                            _searchInputController.clear();
+                          });
+                        },
+                      ),
+              ),
+              onTap: () {
+                if (searchingOption.value != IsSearching.none) return;
+                searchingOption.value = IsSearching.line;
+              }),
+        );
+  }
+
+  Widget _bottomSheet() {
+    return BottomSheet(
+      enableDrag: false,
+      builder: (context) {
+        return SizedBox(
+          height: 64,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ButtonBottomSheet(
+                  label: 'Atualizar',
+                  iconData: Icons.refresh,
+                  onTap: () => _controllerMaps.getAllBusStop()),
+              ButtonBottomSheet(
+                label: 'GPS',
+                iconData: Icons.gps_fixed,
+                onTap: () => _controllerMaps.moveCameraToUserPosition(),
+              ),
+              ButtonBottomSheet(
+                label: 'Ocultar',
+                iconData: Icons.bus_alert,
+                onTap: () => _controllerMaps.toogleBusStopVisilibity(),
+              ),
+            ],
+          ),
+        );
+      },
+      onClosing: () {},
     );
   }
 
@@ -239,41 +279,11 @@ class _HomePageState extends State<HomePage> {
               myLocationButtonEnabled: false,
               myLocationEnabled: _controllerMaps.hasUserPosition.value,
             ),
-            if (_isSearching.value) _containerSearch(),
-            _textFieldSearch(),
+            if (searchingOption.value != IsSearching.none) _containerSearch(),
+            _inputSearch(),
           ]),
-          bottomSheet: _isSearching.value == false
-              ? BottomSheet(
-                  enableDrag: false,
-                  builder: (context) {
-                    return SizedBox(
-                      height: 64,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          ButtonBottomSheet(
-                              label: 'Atualizar',
-                              iconData: Icons.refresh,
-                              onTap: () => _controllerMaps.getAllBusStop()),
-                          ButtonBottomSheet(
-                            label: 'GPS',
-                            iconData: Icons.gps_fixed,
-                            onTap: () =>
-                                _controllerMaps.moveCameraToUserPosition(),
-                          ),
-                          ButtonBottomSheet(
-                            label: 'Ocultar',
-                            iconData: Icons.bus_alert,
-                            onTap: () =>
-                                _controllerMaps.toogleBusStopVisilibity(),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  onClosing: () {},
-                )
-              : null,
+          bottomSheet:
+              searchingOption.value == IsSearching.none ? _bottomSheet() : null,
         ));
   }
 }
