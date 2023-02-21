@@ -13,30 +13,30 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  late final GMapController gmap;
+  late final GMapController _controllerMaps;
 
   final RxString _statusText = ''.obs;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controllerMaps = Get.put(GMapController());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await loadData();
+    });
+  }
 
   Future<void> loadData() async {
     _statusText.value = 'Conectando ao servidor...';
     await Api.instance.getToken();
 
     _statusText.value = 'Obtendo paradas de ônibus...';
-    await gmap.getAllBusStop();
+    await _controllerMaps.getAllBusStop();
 
     _statusText.value = 'Carregando o mapa';
-    Get.toNamed(AppRoutes.home);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    gmap = Get.put(GMapController());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await loadData();
-    });
+    Get.offAndToNamed(AppRoutes.home);
   }
 
   @override

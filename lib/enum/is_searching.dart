@@ -1,8 +1,8 @@
-enum IsSearching {
+enum SearchType {
   line,
   address,
   favorite,
   none;
 
-  const IsSearching();
+  const SearchType();
 }
