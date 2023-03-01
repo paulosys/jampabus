@@ -44,35 +44,27 @@ class _HomePageState extends State<HomePage> {
     return _controllerMaps.busStopIsVisible.value ? 'Ocultar' : 'Mostrar';
   }
 
-  Widget _bottomSheet() {
-    return BottomSheet(
-      backgroundColor: Colors.grey[100],
-      enableDrag: false,
-      builder: (context) {
-        return SizedBox(
-          height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              ButtonBottomSheet(
-                  label: 'Atualizar',
-                  iconData: Icons.refresh,
-                  onTap: () => _controllerMaps.getAllBusStop()),
-              ButtonBottomSheet(
-                label: 'GPS',
-                iconData: Icons.gps_fixed,
-                onTap: () => _controllerMaps.moveCameraToUserPosition(),
-              ),
-              ButtonBottomSheet(
-                label: labelButtonHideBusStop(),
-                iconData: Icons.bus_alert,
-                onTap: () => _controllerMaps.toogleBusStopVisilibity(),
-              ),
-            ],
+  Widget _bottomAppBar() {
+    return BottomAppBar(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          ButtonBottomAppBar(
+              label: 'Atualizar',
+              iconData: Icons.refresh,
+              onTap: () => _controllerMaps.getAllBusStop()),
+          ButtonBottomAppBar(
+            label: 'GPS',
+            iconData: Icons.gps_fixed,
+            onTap: () => _controllerMaps.moveCameraToUserPosition(),
           ),
-        );
-      },
-      onClosing: () {},
+          ButtonBottomAppBar(
+            label: labelButtonHideBusStop(),
+            iconData: Icons.bus_alert,
+            onTap: () => _controllerMaps.toogleBusStopVisilibity(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -82,8 +74,9 @@ class _HomePageState extends State<HomePage> {
           body: Stack(children: [
             GoogleMap(
               initialCameraPosition: HomePage._centerJP,
-              onMapCreated: (controller) =>
-                  _controllerMaps.onMapCreated(controller),
+              onMapCreated: (controller) {
+                _controllerMaps.onMapCreated(controller);
+              },
               markers: _controllerMaps.busStopIsVisible.value
                   ? _controllerMaps.markers.toSet()
                   : {},
@@ -95,9 +88,10 @@ class _HomePageState extends State<HomePage> {
               SearchResults(controllerMaps: _controllerMaps),
             const InputSearch(),
           ]),
-          bottomSheet: _homeController.searchingOption.value == SearchType.none
-              ? _bottomSheet()
-              : null,
+          bottomNavigationBar:
+              _homeController.searchingOption.value == SearchType.none
+                  ? _bottomAppBar()
+                  : null,
         ));
   }
 }

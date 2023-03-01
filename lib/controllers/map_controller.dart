@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -14,7 +15,24 @@ class GMapController extends GetxController {
 
   void onMapCreated(GoogleMapController gmc) async {
     _mapsController = gmc;
+    setMapStyle();
     await moveCameraToUserPosition();
+  }
+
+  Future setMapStyle() async {
+    // final theme = Get.isDarkMode ? Brightness.dark : Brightness.light;
+    // if (theme == Brightness.dark) {
+    //   print('dark');
+    //   String darkMapStyle =
+    //       await rootBundle.loadString('assets/map_style/dark.json');
+    //   _mapsController.setMapStyle(darkMapStyle);
+    // } else {
+    //   print('light');
+    //   _mapsController.setMapStyle(null);
+    // }
+    String darkMapStyle =
+          await rootBundle.loadString('assets/maps_style/dark.json');
+      _mapsController.setMapStyle(darkMapStyle);
   }
 
   Future<void> _createMarkers(List data) async {

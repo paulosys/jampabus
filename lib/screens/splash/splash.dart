@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:jampabus/routes/app_routes.dart';
 
@@ -24,8 +25,17 @@ class _SplashScreenState extends State<SplashScreen> {
     _controllerMaps = Get.put(GMapController());
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _changeColorSystem();
       await loadData();
     });
+  }
+
+  void _changeColorSystem() {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarIconBrightness: Brightness.light,
+      statusBarColor: Theme.of(context).primaryColor,
+      systemNavigationBarColor: Theme.of(context).primaryColor,
+    ));
   }
 
   Future<void> loadData() async {
@@ -42,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.blue[400],
+      color: Theme.of(context).primaryColor,
       child: Center(
           child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

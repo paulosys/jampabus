@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_config/flutter_config.dart';
 import 'package:get/get.dart';
+import 'package:jampabus/theme/themes.dart';
 
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
@@ -9,17 +10,8 @@ import 'routes/app_routes.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterConfig.loadEnvVariables();
-  _changeColorSystem();
 
   runApp(const MyApp());
-}
-
-void _changeColorSystem() {
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    statusBarColor: Colors.blue[400], // transparent status bar
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: Colors.blue[400],
-  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -30,8 +22,10 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'JampaBUS',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+      themeMode: ThemeMode.system,
+      theme: theme,
+      darkTheme: ThemeData(
+        colorSchemeSeed: const Color(0xFF019BE3), //0xFF01456D
       ),
       locale: const Locale('pt', 'BR'),
       getPages: AppPages.pages,

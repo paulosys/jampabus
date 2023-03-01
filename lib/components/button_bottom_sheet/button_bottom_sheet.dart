@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
-class ButtonBottomSheet extends StatelessWidget {
+class ButtonBottomAppBar extends StatelessWidget {
   final String label;
   final IconData iconData;
   final Function onTap;
-  const ButtonBottomSheet(
-      {Key? key, required this.label, required this.iconData, required this.onTap})
+  const ButtonBottomAppBar(
+      {Key? key,
+      required this.label,
+      required this.iconData,
+      required this.onTap})
       : super(key: key);
 
   @override
@@ -17,7 +20,7 @@ class ButtonBottomSheet extends StatelessWidget {
             customBorder: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(100),
             ),
-            onTap: ()=> onTap(),
+            onTap: () => onTap(),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
